@@ -1,0 +1,34 @@
+name: pr_merge
+
+# Only trigger, when the build workflow succeeded
+on:
+  workflow_run:
+    workflows: [pr_apply]
+    types:
+      - completed
+
+jobs:
+  merge:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+      statuses: read
+      actions: read
+    outputs:
+      pullRequestNumber: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
+    steps:
+      - name: "Get information about the current run"
+        uses: potiuk/get-workflow-origin@v1_5
+        id: workflow-run-info
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sourceRunId: ${{ github.event.workflow_run.id }}
+
+      - name: merge a pull request after terraform apply
+        uses: sudo-bot/action-pull-request-merge@v1.2.0
+        with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}

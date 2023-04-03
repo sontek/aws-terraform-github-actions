@@ -1,0 +1,28 @@
+name: pr_apply
+
+on:
+  pull_request:
+    types: [ labeled ]
+
+env:
+  TERRAFORM_CLOUD_TOKENS: app.terraform.io=${{ secrets.TFE_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  terraform_apply:
+    if: ${{ github.event.label.name == 'tfc-apply' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        folder:
+          - root
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dflook/terraform-apply@v1
+        with:
+          path: ${{ matrix.folder }}
+          workspace: ${{ matrix.folder }}
